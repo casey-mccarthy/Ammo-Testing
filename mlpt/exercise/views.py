@@ -6,10 +6,10 @@ from .models import *
 
 
 def home(request):
-    trip = Trip.objects.first()
-    car_weight = trip.get_vehicle_weight()
-    car_fuel = trip.get_vehicle_fuel()
-    
+    trip = Trip.objects.get_vehicle_weight(trip=2)["total_weight"]
+    print(trip)
+    quantities = Trip.objects.get_vehicle_quantity(trip=2)
+    print(quantities)
     context = {
         'trip' : trip
     }
