@@ -2,6 +2,7 @@
 from django.db import models
 from django.db.models import Sum, F, Count
 from django.db.models.query import QuerySet
+from .managers import VehicleManager, TripManager
 
 # Create your models here.
 
@@ -31,21 +32,18 @@ class TripManager(models.Manager):
 
 
     def get_vehicle_parts_count(self, trip: int):
-        """Return a total count of all parts for each vehicle associated to a trip.
+        """Return a total count of all parts for each vehicle associated to a trip."""
 
-        parts = Part.objects.filter(
-            vehicle__in=Vehicle.objects.filter(
-                trip__in=self.get_queryset().filter(id=trip)
-                )
-            )
-        """
 
         return Vehicle.objects.filter(
                 trip__in=self.get_queryset().filter(id=trip)
                 ).aggregate(parts_count=Count('parts'))
 
+
     def get_vehicle_parts_weight(self, trip: int):
         """Return a total weight of all parts for each vehicle associated to a trip."""
+
+
             
         return Part.objects.filter(
             vehicle__in=Vehicle.objects.filter(
@@ -64,6 +62,7 @@ class VehicleManager(models.Manager):
                 )
             )
 
+
 class Part(models.Model):
     """A part to a Vehicle."""
     name = models.CharField(max_length=50, help_text="The common name of the part.")
@@ -71,6 +70,7 @@ class Part(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Vehicle(models.Model):
     """A vehicle may belong to multiple businesses and multiple trips at once."""
@@ -99,12 +99,14 @@ class Vehicle(models.Model):
         """Return the total weight of all parts in a vehicle."""
         return self.parts.all().aggregate(weight=Sum(F('weight')))["weight"]
 
+
 class Business(models.Model):
     """A business that is used to hold many persons and assets."""
     name = models.CharField(max_length=50, help_text="The name of the business.")
 
     def __str__(self):
         return self.name
+
 
 class EmployeeType(models.Model):
     """Employee types can belong to many businesses."""
@@ -128,6 +130,7 @@ class Trip(models.Model):
     def __str__(self):
         return self.name
 
+
 class TripVehicle(models.Model):
     """Intermediate table for Trips and Vehicles assigning a quantity."""
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
@@ -139,6 +142,7 @@ class TripVehicle(models.Model):
     def __str__(self):
         return f"{self.trip}  {self.business}  {self.vehicle}  {self.quantity}"
 
+
 class TripEmployeeType(models.Model):
     """Intermediate table for Trips and Employees assigning a quantity."""
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
@@ -149,6 +153,7 @@ class TripEmployeeType(models.Model):
 
     def __str__(self):
         return f"{self.trip}  {self.business}  {self.employee_types}  {self.quantity}"
+
 
 class VehiclePart(models.Model):
     """Intermediate table for Vehicles and Parts assigning a quantity."""
