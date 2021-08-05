@@ -6,12 +6,16 @@ from .models import *
 
 
 def home(request):
-    trip = Trip.objects.get_vehicle_weight(trip=2)["total_weight"]
-    print(trip)
+    weight = Trip.objects.get_vehicle_weight(trip=2)
+    print(weight)
     quantities = Trip.objects.get_vehicle_quantity(trip=2)
     print(quantities)
+    fuel = Trip.objects.get_vehicle_bingo_fuel(trip=2)
+    print(fuel)
     context = {
-        'trip' : trip
+        'weight' : weight,
+        'quantities' : quantities,
+        'fuel' : fuel,
     }
 
     return render(request, 'exercise/home.html', context=context)

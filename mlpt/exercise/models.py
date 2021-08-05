@@ -6,8 +6,8 @@ from django.db.models import Sum, F
 
 class TripManager(models.Manager):
 
-    def get_vehicle_weight(self, trip: int):
-        """Return the cumulative value of each vehicle and its weight for an exercise."""
+    def get_vehicle_weight(self, trip: int) -> dict:
+        """Return the cumulative weight of each vehicle associated with a trip."""
         return self.get_queryset().filter(id=trip).aggregate(
             total_weight=Sum(
                 F('vehicles__weight')*F('tripvehicle__quantity')
@@ -15,12 +15,18 @@ class TripManager(models.Manager):
             )
 
 
-    def get_vehicle_quantity(self, trip: int):
-        return self.get_queryset().filter(id=trip).values('tripvehicle__quantity')
+    def get_vehicle_quantity(self, trip: int) -> dict:
+        """Returns the total number of vehicles associated with a trip."""
+        return self.get_queryset().filter(id=trip).aggregate(
+            total_vehicles=Sum('tripvehicle__quantity')
+            )
 
 
-    def get_vehicle_fuel(self):
-        return self.get_queryset().all().aggregate(total_fuel=Sum('vehicles__fuel'))
+    def get_vehicle_bingo_fuel(self, trip: int) -> dict:
+        """Returns the total amount of initial fuel required to top off every vehicle on a trip."""
+        return self.get_queryset().filter(id=trip).aggregate(
+            total_bingo_fuel=Sum(F('vehicles__fuel_capacity') * F('tripvehicle__quantity'))
+            )
 
 class Vehicle(models.Model):
     """A vehicle may belong to multiple businesses and multiple trips at once."""
