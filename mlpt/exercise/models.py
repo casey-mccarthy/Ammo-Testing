@@ -1,16 +1,26 @@
 
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, F
 
 # Create your models here.
 
 class TripManager(models.Manager):
 
-    def get_vehicle_weight(self):
-        return self.get_queryset().all().aggregate(total_weight=Sum('vehicle__weight'))
+    def get_vehicle_weight(self, trip: int):
+        """Return the cumulative value of each vehicle and its weight for an exercise."""
+        return self.get_queryset().filter(id=trip).aggregate(
+            total_weight=Sum(
+                F('vehicles__weight')*F('tripvehicle__quantity')
+                )
+            )
+
+
+    def get_vehicle_quantity(self, trip: int):
+        return self.get_queryset().filter(id=trip).values('tripvehicle__quantity')
+
 
     def get_vehicle_fuel(self):
-        return self.get_queryset().all().aggregate(total_fuel=Sum('vehicle__fuel'))
+        return self.get_queryset().all().aggregate(total_fuel=Sum('vehicles__fuel'))
 
 class Vehicle(models.Model):
     """A vehicle may belong to multiple businesses and multiple trips at once."""
