@@ -1,0 +1,7 @@
+
+{% if trip %}
+    {% for business in trip.businesses.all %}
+    <p>{{business}}</p>  
+    {% endfor %}
+{% endif %}
+
