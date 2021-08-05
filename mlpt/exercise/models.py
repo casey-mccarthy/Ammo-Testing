@@ -38,6 +38,7 @@ class TripManager(models.Manager):
                 )
             )
 
+        # this returns a number of perts for
         vehicles = parts.all().values('vehicle').count()
         print(vehicles)
 
@@ -79,6 +80,15 @@ class Vehicle(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def parts_count(self):
+        """Return the count of all parts in a vehicle."""
+        return self.parts.all().aggregate(count=Sum(F('vehiclepart__quantity')))["count"]
+
+    @property
+    def parts_weight(self):
+        """Return the total weight of all parts in a vehicle."""
+        return self.parts.all().aggregate(weight=Sum(F('weight')))["weight"]
 
 class Business(models.Model):
     """A business that is used to hold many persons and assets."""

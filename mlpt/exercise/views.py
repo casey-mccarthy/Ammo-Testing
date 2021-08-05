@@ -18,6 +18,10 @@ def home(request):
     vehicle_parts = Trip.objects.get_vehicle_parts_count(trip=2)
     print(vehicle_parts)
 
+    test = Vehicle.objects.get(id=2)
+    print(test.parts_count)
+    print(test.parts_weight)
+
     context = {
         'weight' : weight,
         'quantities' : quantities,
