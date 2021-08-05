@@ -28,6 +28,12 @@ class TripManager(models.Manager):
             total_bingo_fuel=Sum(F('vehicles__fuel_capacity') * F('tripvehicle__quantity'))
             )
 
+class Part(models.Model):
+    """A part to a Vehicle."""
+    name = models.CharField(max_length=50, help_text="The common name of the part.")
+    weight = models.IntegerField(default=0, help_text="The weight of the part.")
+
+
 class Vehicle(models.Model):
     """A vehicle may belong to multiple businesses and multiple trips at once."""
 
@@ -35,13 +41,19 @@ class Vehicle(models.Model):
     fuel_capacity = models.IntegerField(default=0, help_text="The total fuel capacity in gallons.")
     burn_rate = models.FloatField(default=0, help_text="The burn rate of fuel in gal/h.")
     weight = models.FloatField(default=0, help_text="The weight of the vehicle in pounds.")
+    parts = models.ManyToManyField(
+        Part, 
+        through="VehiclePart", 
+        through_fields=('vehicle', 'part'),
+        help_text="A list of vehicle parts that this vehicle contains."
+        )
 
     def __str__(self):
         return self.name
 
 
 class Business(models.Model):
-    """"""
+    """A business that is used to hold many persons and assets."""
     name = models.CharField(max_length=50, help_text="The name of the business.")
 
     def __str__(self):
@@ -70,6 +82,7 @@ class Trip(models.Model):
         return self.name
 
 class TripVehicle(models.Model):
+    """Intermediate table for Trips and Vehicles assigning a quantity."""
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
     business = models.ForeignKey(Business, on_delete=models.CASCADE)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
@@ -77,7 +90,15 @@ class TripVehicle(models.Model):
 
 
 class TripEmployeeType(models.Model):
+    """Intermediate table for Trips and Employees assigning a quantity."""
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
     business = models.ForeignKey(Business, on_delete=models.CASCADE)
     employee_types = models.ForeignKey(EmployeeType, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+
+
+class VehiclePart(models.Model):
+    """Intermediate table for Vehicles and Parts assigning a quantity."""
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+    part = models.ForeignKey(Part, on_delete=models.CASCADE)
     quantity = models.IntegerField()
