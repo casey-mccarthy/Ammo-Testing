@@ -31,29 +31,38 @@ class TripManager(models.Manager):
 
 
     def get_vehicle_parts_count(self, trip: int):
-        """Return a total count of all parts for each vehicle associated to a trip."""
+        """Return a total count of all parts for each vehicle associated to a trip.
+
         parts = Part.objects.filter(
             vehicle__in=Vehicle.objects.filter(
                 trip__in=self.get_queryset().filter(id=trip)
                 )
             )
+        """
 
-        # this returns a number of perts for
-        vehicles = parts.all().values('vehicle').count()
-        print(vehicles)
-
-        print(parts)
-        return parts.aggregate(parts_count=Count('vehicle__parts'))
+        return Vehicle.objects.filter(
+                trip__in=self.get_queryset().filter(id=trip)
+                ).aggregate(parts_count=Count('parts'))
 
     def get_vehicle_parts_weight(self, trip: int):
         """Return a total weight of all parts for each vehicle associated to a trip."""
-        parts = Part.objects.filter(
+            
+        return Part.objects.filter(
             vehicle__in=Vehicle.objects.filter(
                 trip__in=self.get_queryset().filter(id=trip)
                 )
+            ).aggregate(parts_count=Sum('vehicle__parts'))
+
+
+class VehicleManager(models.Manager):
+
+    def get_parts_weight(self) -> dict:
+        """Return the cumulative weight of each vehicle associated with a trip."""
+        return self.get_queryset().filter().aggregate(
+            total_weight=Sum(
+                F('parts__weight')*F('tripvehicle__quantity')
+                )
             )
-            
-        return parts.aggregate(parts_count=Sum('vehicle__parts'))
 
 class Part(models.Model):
     """A part to a Vehicle."""

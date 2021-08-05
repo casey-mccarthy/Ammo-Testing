@@ -6,21 +6,13 @@ from .models import *
 
 
 def home(request):
-    weight = Trip.objects.get_vehicle_weight(trip=2)
-    print(weight)
-
-    quantities = Trip.objects.get_vehicle_quantity(trip=2)
-    print(quantities)
-
-    fuel = Trip.objects.get_vehicle_bingo_fuel(trip=2)
-    print(fuel)
-
-    vehicle_parts = Trip.objects.get_vehicle_parts_count(trip=2)
-    print(vehicle_parts)
-
+    trip = Trip.objects.get(id=1)
+    weight = Trip.objects.get_vehicle_weight(trip=trip.id)
+    quantities = Trip.objects.get_vehicle_quantity(trip=trip.id)
+    fuel = Trip.objects.get_vehicle_bingo_fuel(trip=trip.id)
+    vehicle_parts = Trip.objects.get_vehicle_parts_count(trip=trip.id)
     test = Vehicle.objects.get(id=2)
-    print(test.parts_count)
-    print(test.parts_weight)
+
 
     context = {
         'weight' : weight,
