@@ -2,7 +2,7 @@
 from django.db import models
 from django.db.models import Sum, F, Count
 from django.db.models.query import QuerySet
-from .managers import VehicleManager, TripManager
+
 
 # Create your models here.
 
