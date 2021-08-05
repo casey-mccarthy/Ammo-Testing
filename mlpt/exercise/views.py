@@ -14,7 +14,7 @@ def home(request):
     test = Vehicle.objects.get(id=1)
 
     # get all vehicles going and list their parts
-    parts_list = TripVehicle.objects.filter(trip=trip.id).values('vehicle').annotate(count=Sum('vehicle__parts'))
+    parts_list = TripVehicle.objects.filter(trip=trip.id).values('vehicle__name').annotate(count=Sum('vehicle__parts'))
     
 
 
