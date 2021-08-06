@@ -31,9 +31,7 @@ def home(request):
         'quantities' : quantities,
         'fuel' : fuel,
         'equipment_ammos' : equipment_ammos,
-        
         'ammos_list' : ammos_list,
-        
         'test_list' : test_list,
     }
 
