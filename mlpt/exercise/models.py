@@ -6,123 +6,119 @@ from django.db.models.query import QuerySet
 
 # Create your models here.
 
-class TripManager(models.Manager):
 
-    def get_vehicle_weight(self, trip: int) -> dict:
-        """Return the cumulative weight of each vehicle associated with a trip."""
-        return self.get_queryset().filter(id=trip).aggregate(
+class ExerciseManager(models.Manager):
+
+    def get_equipment_weight(self, exercise: int) -> dict:
+        """Return the cumulative weight of each equipment associated with a exercise."""
+        return self.get_queryset().filter(id=exercise).aggregate(
             total_weight=Sum(
-                F('vehicles__weight')*F('tripvehicle__quantity')
+                F('equipments__weight')*F('exerciseequipment__quantity')
                 )
             )
 
 
-    def get_vehicle_quantity(self, trip: int) -> dict:
-        """Returns the total number of vehicles associated with a trip."""
-        return self.get_queryset().filter(id=trip).aggregate(
-            total_vehicles=Sum('tripvehicle__quantity')
+    def get_equipment_quantity(self, exercise: int) -> dict:
+        """Returns the total number of equipments associated with a exercise."""
+        return self.get_queryset().filter(id=exercise).aggregate(
+            total_equipments=Sum('exerciseequipment__quantity')
             )
 
 
-    def get_vehicle_bingo_fuel(self, trip: int) -> dict:
-        """Returns the total amount of initial fuel required to top off every vehicle on a trip."""
-        return self.get_queryset().filter(id=trip).aggregate(
-            total_bingo_fuel=Sum(F('vehicles__fuel_capacity') * F('tripvehicle__quantity'))
+    def get_equipment_bingo_fuel(self, exercise: int) -> dict:
+        """Returns the total amount of initial fuel required to top off every equipment on a exercise."""
+        return self.get_queryset().filter(id=exercise).aggregate(
+            total_bingo_fuel=Sum(F('equipments__fuel_capacity') * F('exerciseequipment__quantity'))
             )
 
 
-    def get_vehicle_parts_count(self, trip: int):
-        """Return a total count of all parts for each vehicle associated to a trip."""
+    def get_equipment_ammo_count(self, exercise: int):
+        """Return a total count of all ammo for each equipment associated to a exercise."""
+        return Equipment.objects.filter(
+                exercise__in=self.get_queryset().filter(id=exercise)
+                ).aggregate(ammo_count=Count('ammos'))
 
 
-        return Vehicle.objects.filter(
-                trip__in=self.get_queryset().filter(id=trip)
-                ).aggregate(parts_count=Count('parts'))
-
-
-    def get_vehicle_parts_weight(self, trip: int):
-        """Return a total weight of all parts for each vehicle associated to a trip."""
-
-
-            
-        return Part.objects.filter(
-            vehicle__in=Vehicle.objects.filter(
-                trip__in=self.get_queryset().filter(id=trip)
+    def get_equipment_ammo_weight(self, exercise: int):
+        """Return a total weight of all ammo for each equipment associated to a exercise."""
+        return Ammo.objects.filter(
+            equipment__in=Equipment.objects.filter(
+                exercise__in=self.get_queryset().filter(id=exercise)
                 )
-            ).aggregate(parts_count=Sum('vehicle__parts'))
+            ).aggregate(ammo_count=Sum('equipment__ammo'))
 
 
-class VehicleManager(models.Manager):
+class EquipmentManager(models.Manager):
 
-    def get_parts_weight(self) -> dict:
-        """Return the cumulative weight of each vehicle associated with a trip."""
+    def get_ammo_weight(self) -> dict:
+        """Return the cumulative weight of each equipment associated with a exercise."""
         return self.get_queryset().filter().aggregate(
             total_weight=Sum(
-                F('parts__weight')*F('tripvehicle__quantity')
+                F('ammo__weight')*F('exerciseequipment__quantity')
                 )
             )
 
-
-class Part(models.Model):
-    """A part to a Vehicle."""
+# ammo
+class Ammo(models.Model):
+    """A part to a Equipment."""
     name = models.CharField(max_length=50, help_text="The common name of the part.")
     weight = models.IntegerField(default=0, help_text="The weight of the part.")
 
     def __str__(self):
         return self.name
 
+# equipment
+class Equipment(models.Model):
+    """A equipment may belong to multiple unites and multiple exercises at once."""
 
-class Vehicle(models.Model):
-    """A vehicle may belong to multiple businesses and multiple trips at once."""
-
-    name = models.CharField(max_length=50, help_text="The common name of the vehicle.")
+    name = models.CharField(max_length=50, help_text="The common name of the equipment.")
     fuel_capacity = models.IntegerField(default=0, help_text="The total fuel capacity in gallons.")
     burn_rate = models.FloatField(default=0, help_text="The burn rate of fuel in gal/h.")
-    weight = models.FloatField(default=0, help_text="The weight of the vehicle in pounds.")
-    parts = models.ManyToManyField(
-        Part, 
-        through="VehiclePart", 
-        through_fields=('vehicle', 'part'),
-        help_text="A list of vehicle parts that this vehicle contains."
+    weight = models.FloatField(default=0, help_text="The weight of the equipment in pounds.")
+    ammos = models.ManyToManyField(
+        Ammo, 
+        through="EquipmentAmmo", 
+        through_fields=('equipment', 'part'),
+        help_text="A list of equipment ammo that this equipment contains."
         )
 
     def __str__(self):
         return self.name
 
     @property
-    def parts_count(self):
-        """Return the count of all parts in a vehicle."""
-        return self.parts.all().aggregate(count=Sum(F('vehiclepart__quantity')))["count"]
+    def ammo_count(self):
+        """Return the count of all ammo in a equipment."""
+        return self.ammo.all().aggregate(count=Sum(F('equipmentpart__quantity')))["count"]
 
     @property
-    def parts_weight(self):
-        """Return the total weight of all parts in a vehicle."""
-        return self.parts.all().aggregate(weight=Sum(F('weight')))["weight"]
+    def ammo_weight(self):
+        """Return the total weight of all ammo in a equipment."""
+        return self.ammo.all().aggregate(weight=Sum(F('weight')))["weight"]
 
-
-class Business(models.Model):
-    """A business that is used to hold many persons and assets."""
-    name = models.CharField(max_length=50, help_text="The name of the business.")
+# unit
+class Unit(models.Model):
+    """A unit that is used to hold many persons and assets."""
+    name = models.CharField(max_length=50, help_text="The name of the unit.")
 
     def __str__(self):
         return self.name
 
-
-class EmployeeType(models.Model):
-    """Employee types can belong to many businesses."""
-    name = models.CharField(max_length=50, help_text="The title/role of a type of employee.")
+# troop - officer, enlisted, etc
+class PeopleType(models.Model):
+    """PeopleType can belong to many units."""
+    name = models.CharField(max_length=50, help_text="The title/role of a type of person.")
 
     def __str__(self):
         return self.name      
 
-
-class Trip(models.Model):
-    """A trip will be the primary object, composed of other objects that are associated with the trip."""
+# exercise
+class Exercise(models.Model):
+    """A exercise will be the primary object, composed of other objects that are associated with the exercise."""
     name = models.CharField(max_length=128)
-    vehicles = models.ManyToManyField(Vehicle, through="TripVehicle", through_fields=('trip', 'vehicle'),)
-    employee_types = models.ManyToManyField(EmployeeType, through="TripEmployeeType", through_fields=('trip', 'employee_types'),)
-    businesses = models.ManyToManyField(Business)
-    objects = TripManager()
+    equipments = models.ManyToManyField(Equipment, through="ExerciseEquipment", through_fields=('exercise', 'equipment'),)
+    people_types = models.ManyToManyField(PeopleType, through="ExercisePeopleType", through_fields=('exercise', 'people_type'),)
+    units = models.ManyToManyField(Unit)
+    objects = ExerciseManager()
 
     class Meta:
         base_manager_name = 'objects'
@@ -131,35 +127,35 @@ class Trip(models.Model):
         return self.name
 
 
-class TripVehicle(models.Model):
-    """Intermediate table for Trips and Vehicles assigning a quantity."""
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
-    business = models.ForeignKey(Business, on_delete=models.CASCADE)
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+class ExerciseEquipment(models.Model):
+    """Intermediate table for Exercises and Equipments assigning a quantity."""
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='equipment')
     quantity = models.IntegerField()
 
 
     def __str__(self):
-        return f"{self.trip}  {self.business}  {self.vehicle}  {self.quantity}"
+        return f"{self.exercise}  {self.unit}  {self.equipment}  {self.quantity}"
 
 
-class TripEmployeeType(models.Model):
-    """Intermediate table for Trips and Employees assigning a quantity."""
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
-    business = models.ForeignKey(Business, on_delete=models.CASCADE)
-    employee_types = models.ForeignKey(EmployeeType, on_delete=models.CASCADE)
+class ExercisePeopleType(models.Model):
+    """Intermediate table for Exercises and PeopleTypess assigning a quantity."""
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+    people_type = models.ForeignKey(PeopleType, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
 
     def __str__(self):
-        return f"{self.trip}  {self.business}  {self.employee_types}  {self.quantity}"
+        return f"{self.exercise}  {self.unit}  {self.people_type}  {self.quantity}"
 
 
-class VehiclePart(models.Model):
-    """Intermediate table for Vehicles and Parts assigning a quantity."""
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
-    part = models.ForeignKey(Part, on_delete=models.CASCADE)
+class EquipmentAmmo(models.Model):
+    """Intermediate table for Equipments and Ammos assigning a quantity."""
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
+    part = models.ForeignKey(Ammo, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
     def __str__(self):
-        return f"{self.vehicle}  {self.part}  {self.quantity}"
+        return f"{self.equipment}  {self.part}  {self.quantity}"

@@ -38,6 +38,16 @@
         <p>{{parts_list}}</p>  
 
     {% endif %}
+
+    {% if test_list %}
+
+        <p>{{test_list}}</p> 
+        {% for part in test_list %} 
+            {{part__vehicle}}
+        {% endfor %}
+
+    {% endif %}
+
 </body>
 
 </html>

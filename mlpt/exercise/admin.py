@@ -2,11 +2,11 @@ from django.contrib import admin
 from . import models
 
 # Register your models here.
-admin.site.register(models.Trip)
-admin.site.register(models.Vehicle)
-admin.site.register(models.Part)
-admin.site.register(models.EmployeeType)
-admin.site.register(models.Business)
-admin.site.register(models.TripVehicle)
-admin.site.register(models.TripEmployeeType)
-admin.site.register(models.VehiclePart)
+admin.site.register(models.Exercise)
+admin.site.register(models.Equipment)
+admin.site.register(models.Ammo)
+admin.site.register(models.PeopleType)
+admin.site.register(models.Unit)
+admin.site.register(models.ExercisePeopleType)
+admin.site.register(models.ExerciseEquipment)
+admin.site.register(models.EquipmentAmmo)
