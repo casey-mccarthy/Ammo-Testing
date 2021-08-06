@@ -6,24 +6,35 @@ from .models import *
 
 
 def home(request):
-    trip = Trip.objects.all().first()
-    weight = Trip.objects.get_vehicle_weight(trip=trip.id)
-    quantities = Trip.objects.get_vehicle_quantity(trip=trip.id)
-    fuel = Trip.objects.get_vehicle_bingo_fuel(trip=trip.id)
-    vehicle_parts = Trip.objects.get_vehicle_parts_count(trip=trip.id)
-    test = Vehicle.objects.get(id=1)
+    exercise = Exercise.objects.all().first()
+    weight = Exercise.objects.get_equipment_weight(exercise=exercise.id)
+    quantities = Exercise.objects.get_equipment_quantity(exercise=exercise.id)
+    fuel = Exercise.objects.get_equipment_bingo_fuel(exercise=exercise.id)
+    equipment_ammos = Exercise.objects.get_equipment_ammos_count(exercise=exercise.id)
+    test = Equipment.objects.get(id=1)
 
-    # get all vehicles going and list their parts
-    parts_list = TripVehicle.objects.filter(trip=trip.id).values('vehicle__name').annotate(count=Sum('vehicle__parts'))
+    # get all equipments going and list their ammos
+    ammos_list = ExerciseEquipment.objects.filter(exercise=exercise.id).values('equipment__name').annotate(count=Sum('equipment__ammos'))
+    
+    #test_list = Exercise.objects.filter(id=exercise.id).prefetch_related('equipments','equipments__ammos')
+    test_list = Ammo.objects.filter(equipment__exercise=exercise.id)
+
+    
+
+    print(test_list)
     
 
 
     context = {
+        
         'weight' : weight,
         'quantities' : quantities,
         'fuel' : fuel,
-        'vehicle_parts' : vehicle_parts,
-        'parts_list' : parts_list,
+        'equipment_ammos' : equipment_ammos,
+        
+        'ammos_list' : ammos_list,
+        
+        'test_list' : test_list,
     }
 
     return render(request, 'exercise/home.html', context=context)
