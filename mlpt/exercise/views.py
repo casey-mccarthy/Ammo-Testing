@@ -10,7 +10,7 @@ def home(request):
     weight = Exercise.objects.get_equipment_weight(exercise=exercise.id)
     quantities = Exercise.objects.get_equipment_quantity(exercise=exercise.id)
     fuel = Exercise.objects.get_equipment_bingo_fuel(exercise=exercise.id)
-    equipment_ammos = Exercise.objects.get_equipment_ammos_count(exercise=exercise.id)
+    equipment_ammos = Exercise.objects.get_equipment_ammo_count(exercise=exercise.id)
     test = Equipment.objects.get(id=1)
 
     # get all equipments going and list their ammos

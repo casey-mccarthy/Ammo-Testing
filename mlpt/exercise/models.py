@@ -78,7 +78,7 @@ class Equipment(models.Model):
     ammos = models.ManyToManyField(
         Ammo, 
         through="EquipmentAmmo", 
-        through_fields=('equipment', 'part'),
+        through_fields=('equipment', 'ammo'),
         help_text="A list of equipment ammo that this equipment contains."
         )
 
@@ -153,9 +153,25 @@ class ExercisePeopleType(models.Model):
 
 class EquipmentAmmo(models.Model):
     """Intermediate table for Equipments and Ammos assigning a quantity."""
+
+    GROUND_COMBAT_ELEMENT = 'G'
+    NON_GROUND_COMBAT_ELEMENT = 'N'
+
+    UNIT_TYPES = [
+        (GROUND_COMBAT_ELEMENT, 'Ground Combat Element'),
+        (NON_GROUND_COMBAT_ELEMENT, 'Non-Ground Combat Element'),
+
+    ]
+
+    unit_type = models.CharField(
+        max_length=1,
+        choices=UNIT_TYPES,
+        default=GROUND_COMBAT_ELEMENT,
+    )
+
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
-    part = models.ForeignKey(Ammo, on_delete=models.CASCADE)
+    ammo = models.ForeignKey(Ammo, on_delete=models.CASCADE)
     quantity = models.IntegerField()
 
     def __str__(self):
-        return f"{self.equipment}  {self.part}  {self.quantity}"
+        return f"{self.unit_type}  {self.equipment}  {self.ammo}  {self.quantity}"
