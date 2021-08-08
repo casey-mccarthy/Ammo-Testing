@@ -175,3 +175,6 @@ class EquipmentAmmo(models.Model):
 
     def __str__(self):
         return f"{self.unit_type}  {self.equipment}  {self.ammo}  {self.quantity}"
+
+    class Meta:
+            constraints = [models.UniqueConstraint(fields=['equipment', 'ammo', 'unit_type'], name='EQUIPMENT_AMMO_UNIQUE')]
