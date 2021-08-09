@@ -63,7 +63,6 @@ class Ammo(models.Model):
 
     name = models.CharField(max_length=50, help_text="The common name of the part.")
     weight = models.IntegerField(default=0, help_text="The weight of the part.")
-
     objects = AmmoManager()
 
     def __str__(self):
