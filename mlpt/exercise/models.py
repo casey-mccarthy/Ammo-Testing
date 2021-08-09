@@ -19,52 +19,42 @@ class AmmoManager(models.Manager):
     def get_total_base_allowance_weight(self, exercise: int) -> dict:
         """Return the cumulative base allowance weight of all ammo types associated with all equipment across an exercise."""
         return self.get_queryset().filter(
-            equipment__in=CombatLoad.objects.filter(
-                equipment__in=ExerciseEdl.objects.filter(
-                    exercise__in=Exercise.objects.filter(id=exercise)
+            equipment__in=Equipment.objects.filter(
+                exercise__in=Exercise.objects.filter(id=exercise)
                     )
-                )
-            ).aggregate(total_ammo_base_allowance=Sum(
-                F('ammo__weight') * 
-                F('ammo__combatload__base_allocation') *
-                F('equipment__exerciseedl__quantity')
-                )
-            )
+                        ).aggregate(total_ammo_base_allowance=Sum(
+                            F('weight') * 
+                            F('combatload__base_allocation') *
+                            F('equipment__exerciseedl__quantity')
+                            )
+                        )
 
 
     def get_total_daily_assault_weight(self, exercise: int) -> dict:
         """Return the cumulative daily assault replenishment weight of all ammo types associated with all equipment across an exercise."""
         return self.get_queryset().filter(
             equipment__in=Equipment.objects.filter(
-
-                    exercise__in=Exercise.objects.filter(id=exercise)
-                )
-            ).aggregate(total_ammo_daily_assault=Sum(
-                F('ammo__weight') * 
-                F('ammo__combatload__daily_assault') *
-                F('equipment__exerciseedl__quantity')
-                )
-            )
+                exercise__in=Exercise.objects.filter(id=exercise)
+                    )
+                        ).aggregate(total_ammo_daily_assault=Sum(
+                            F('weight') * 
+                            F('combatload__daily_assault') *
+                            F('equipment__exerciseedl__quantity')
+                            )
+                        )
 
     def get_total_daily_sustain_weight(self, exercise: int) -> dict:
         """Return the cumulative daily sustain replenishment weight of all ammo types associated with all equipment across an exercise."""
         return self.get_queryset().filter(
             equipment__in=Equipment.objects.filter(
-                    exercise__in=Exercise.objects.filter(id=exercise)
+                exercise__in=Exercise.objects.filter(id=exercise)
                     )
-            ).aggregate(total_ammo_daily_sustain=Sum(
-                F('ammo__weight') * 
-                F('ammo__combatload__daily_sustain') *
-                F('equipment__exerciseedl__quantity')
-                )
-            )
-
-
-class CombatLoadManager(models.Manager):
-
-    def combat_loads(self, equipment: int) -> dict:
-        """Return a list of all Combat Loads for a particular weapon system."""
-        pass
+                        ).aggregate(total_ammo_daily_sustain=Sum(
+                            F('weight') * 
+                            F('combatload__daily_sustain') *
+                            F('equipment__exerciseedl__quantity')
+                            )
+                        )
 
 
 # ammo
@@ -128,7 +118,6 @@ class CombatLoad(models.Model):
     def __str__(self):
         return self.ammo.name
 
-    objects = CombatLoadManager()
 
 
 # unit

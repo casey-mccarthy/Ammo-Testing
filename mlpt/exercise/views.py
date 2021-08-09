@@ -13,8 +13,8 @@ def home(request):
     #fuel = Exercise.objects.get_equipment_bingo_fuel(exercise=exercise.id)
     #equipment_ammos = Exercise.objects.get_equipment_ammo_count(exercise=exercise.id)
     base_allowance = Ammo.objects.get_total_base_allowance_weight(exercise=exercise.id)
-    #daily_assault = Ammo.objects.get_total_daily_assault_weight(exercise=exercise.id)
-    #daily_sustain = Ammo.objects.get_total_daily_sustain_weight(exercise=exercise.id)
+    daily_assault = Ammo.objects.get_total_daily_assault_weight(exercise=exercise.id)
+    daily_sustain = Ammo.objects.get_total_daily_sustain_weight(exercise=exercise.id)
   
 
     # get all equipments going and list their ammos
@@ -25,8 +25,8 @@ def home(request):
     context = {
         
         'base_allowance' : base_allowance,
-        #'daily_assault' : daily_assault,
-        #'daily_sustain' : daily_sustain,
+        'daily_assault' : daily_assault,
+        'daily_sustain' : daily_sustain,
 
       
     }
