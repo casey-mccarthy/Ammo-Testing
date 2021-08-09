@@ -48,7 +48,7 @@ class ExerciseManager(models.Manager):
             ).aggregate(ammo_weight=Sum(F('ammo__weight') * F('quantity')))
 
 
-class EquipmentManager(models.Manager):
+class EquipmentItemManager(models.Manager):
 
     def get_ammo_weight(self) -> dict:
         """Return the cumulative weight of each equipment associated with a exercise."""
@@ -67,6 +67,13 @@ class AmmoItemManager(models.Manager):
                 exercise__in=Exercise.objects.filter(id=exercise)
                 )
             ).aggregate(ammo_weight=Sum(F('ammo__weight') * F('quantity')))
+
+
+class EquipmentCombatLoadManager(models.Manager):
+
+    def combat_loads(self, equipment: int) -> dict:
+        """Return a list of all Combat Loads for a particular weapon system."""
+        pass
 
 # ammo
 class Ammo(models.Model):
@@ -105,6 +112,36 @@ class AmmoItem(models.Model):
     def __str__(self):
         return self.ammo.name
 
+class EquipmentCombatLoadItem(models.Model):
+    """A reference to teh combat load for a peice of equipment."""
+
+    ammo = models.ForeignKey(Ammo, on_delete=models.CASCADE)
+
+    GROUND_COMBAT_ELEMENT = 'G'
+    NON_GROUND_COMBAT_ELEMENT = 'N'
+
+    UNIT_TYPES = [
+        (GROUND_COMBAT_ELEMENT, 'Ground Combat Element'),
+        (NON_GROUND_COMBAT_ELEMENT, 'Non-Ground Combat Element'),
+
+    ]
+
+    unit_type = models.CharField(
+        max_length=1,
+        choices=UNIT_TYPES,
+        default=GROUND_COMBAT_ELEMENT,
+    )
+
+    base_allocation = models.PositiveIntegerField(default=0, help_text="The base combat load for this weapon and ammo combination.")
+    daily_assault = models.PositiveIntegerField(default=0, help_text="The daily sustainment quantity.")
+    daily_sustain = models.PositiveIntegerField(default=0, help_text="The daily sustainment quantity.")
+
+    objects = EquipmentCombatLoadManager()
+
+    def __str__(self):
+        return self.ammo.name
+
+
 
 # equipment
 class Equipment(models.Model):
@@ -114,15 +151,42 @@ class Equipment(models.Model):
     fuel_capacity = models.IntegerField(default=0, help_text="The total fuel capacity in gallons.")
     burn_rate = models.FloatField(default=0, help_text="The burn rate of fuel in gal/h.")
     weight = models.FloatField(default=0, help_text="The weight of the equipment in pounds.")
-    ammos = models.ManyToManyField(
-        AmmoItem, 
-        through="EquipmentAmmoItem", 
-        through_fields=('equipment', 'ammo'),
+    combat_loads = models.ManyToManyField(
+        EquipmentCombatLoadItem, 
         help_text="A list of equipment ammo that this equipment contains."
         )
 
     def __str__(self):
         return self.name
+
+class EquipmentItem(models.Model):
+    """A reference to equipment that will exist in an exercise edl."""
+
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
+
+    ASSAULT = 'AE'
+    FOLLOW_ON = 'AFOE'
+
+    PHASING_LOCATION = [
+        (ASSAULT, 'Assault Element'),
+        (FOLLOW_ON, 'Assault Follow-On Element'),
+
+    ]
+
+    phasing_location = models.CharField(
+        max_length=4,
+        choices=PHASING_LOCATION,
+        default=ASSAULT,
+        help_text="The location of the item in relation to the phasing."
+    )
+
+    quantity = models.PositiveIntegerField(default=0, help_text="The quantity of an item.")
+
+    objects = EquipmentItemManager()
+
+    def __str__(self):
+        return self.equipment.name
+
 
 
 
@@ -146,7 +210,7 @@ class PeopleType(models.Model):
 class Exercise(models.Model):
     """A exercise will be the primary object, composed of other objects that are associated with the exercise."""
     name = models.CharField(max_length=128)
-    equipments = models.ManyToManyField(Equipment, through="ExerciseEquipment", through_fields=('exercise', 'equipment'),)
+    equipments = models.ManyToManyField(EquipmentItem, through="ExerciseEquipmentItem", through_fields=('exercise', 'equipment'),)
     people_types = models.ManyToManyField(PeopleType, through="ExercisePeopleType", through_fields=('exercise', 'people_type'),)
     units = models.ManyToManyField(Unit)
     objects = ExerciseManager()
@@ -158,16 +222,14 @@ class Exercise(models.Model):
         return self.name
 
 
-class ExerciseEquipment(models.Model):
+class ExerciseEquipmentItem(models.Model):
     """Intermediate table for Exercises and Equipments assigning a quantity."""
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
-    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='equipment')
-    quantity = models.IntegerField()
-
+    equipment = models.ForeignKey(EquipmentItem, on_delete=models.CASCADE, related_name='gear')
 
     def __str__(self):
-        return f"{self.exercise}  {self.unit}  {self.equipment}  {self.quantity}"
+        return f"{self.exercise}  {self.unit}  {self.equipment} "
 
 
 class ExercisePeopleType(models.Model):
@@ -175,37 +237,10 @@ class ExercisePeopleType(models.Model):
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
     people_type = models.ForeignKey(PeopleType, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
 
-
-    def __str__(self):
-        return f"{self.exercise}  {self.unit}  {self.people_type}  {self.quantity}"
-
-
-class EquipmentAmmoItem(models.Model):
-    """Intermediate table for Equipments and Ammos assigning a quantity."""
-
-    GROUND_COMBAT_ELEMENT = 'G'
-    NON_GROUND_COMBAT_ELEMENT = 'N'
-
-    UNIT_TYPES = [
-        (GROUND_COMBAT_ELEMENT, 'Ground Combat Element'),
-        (NON_GROUND_COMBAT_ELEMENT, 'Non-Ground Combat Element'),
-
-    ]
-
-    unit_type = models.CharField(
-        max_length=1,
-        choices=UNIT_TYPES,
-        default=GROUND_COMBAT_ELEMENT,
-    )
-
-    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
-    ammo = models.ForeignKey(AmmoItem, on_delete=models.CASCADE)
 
 
     def __str__(self):
-        return f"{self.unit_type}  {self.equipment}  {self.ammo}"
+        return f"{self.exercise}  {self.unit}  {self.people_type}  "
 
-    class Meta:
-            constraints = [models.UniqueConstraint(fields=['equipment', 'ammo', 'unit_type'], name='EQUIPMENT_AMMO_UNIQUE')]
+
