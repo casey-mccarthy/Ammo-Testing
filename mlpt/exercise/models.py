@@ -41,11 +41,11 @@ class ExerciseManager(models.Manager):
 
     def get_equipment_ammo_weight(self, exercise: int):
         """Return a total weight of all ammo for each equipment associated to a exercise."""
-        return Ammo.objects.filter(
+        return AmmoItem.objects.filter(
             equipment__in=Equipment.objects.filter(
                 exercise__in=self.get_queryset().filter(id=exercise)
                 )
-            ).aggregate(ammo_count=Sum('equipment__ammo'))
+            ).aggregate(ammo_weight=Sum(F('ammo__weight') * F('quantity')))
 
 
 class EquipmentManager(models.Manager):
@@ -58,6 +58,16 @@ class EquipmentManager(models.Manager):
                 )
             )
 
+class AmmoItemManager(models.Manager):
+
+    def get_ammo_weight(self, exercise: int) -> dict:
+        """Return the cumulative weight of all ammo types associated with all equipment across an exercise."""
+        return self.get_queryset().filter(
+            equipment__in=Equipment.objects.filter(
+                exercise__in=Exercise.objects.filter(id=exercise)
+                )
+            ).aggregate(ammo_weight=Sum(F('ammo__weight') * F('quantity')))
+
 # ammo
 class Ammo(models.Model):
     """A part to a Equipment."""
@@ -67,17 +77,46 @@ class Ammo(models.Model):
     def __str__(self):
         return self.name
 
+class AmmoItem(models.Model):
+    """A reference to Ammo that will exist in an exercise edl."""
+
+    ammo = models.ForeignKey(Ammo, on_delete=models.CASCADE)
+
+    ASSAULT = 'AE'
+    FOLLOW_ON = 'AFOE'
+
+    PHASING_LOCATION = [
+        (ASSAULT, 'Assault Element'),
+        (FOLLOW_ON, 'Assault Follow-On Element'),
+
+    ]
+
+    phasing_location = models.CharField(
+        max_length=4,
+        choices=PHASING_LOCATION,
+        default=ASSAULT,
+        help_text="The location of the item in relation to the phasing."
+    )
+
+    quantity = models.PositiveIntegerField(default=0, help_text="The quantity of an item.")
+
+    objects = AmmoItemManager()
+
+    def __str__(self):
+        return self.ammo.name
+
+
 # equipment
 class Equipment(models.Model):
-    """A equipment may belong to multiple unites and multiple exercises at once."""
+    """A peice of equipment may belong to multiple units and multiple exercises at once."""
 
     name = models.CharField(max_length=50, help_text="The common name of the equipment.")
     fuel_capacity = models.IntegerField(default=0, help_text="The total fuel capacity in gallons.")
     burn_rate = models.FloatField(default=0, help_text="The burn rate of fuel in gal/h.")
     weight = models.FloatField(default=0, help_text="The weight of the equipment in pounds.")
     ammos = models.ManyToManyField(
-        Ammo, 
-        through="EquipmentAmmo", 
+        AmmoItem, 
+        through="EquipmentAmmoItem", 
         through_fields=('equipment', 'ammo'),
         help_text="A list of equipment ammo that this equipment contains."
         )
@@ -85,15 +124,7 @@ class Equipment(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def ammo_count(self):
-        """Return the count of all ammo in a equipment."""
-        return self.ammo.all().aggregate(count=Sum(F('equipmentpart__quantity')))["count"]
 
-    @property
-    def ammo_weight(self):
-        """Return the total weight of all ammo in a equipment."""
-        return self.ammo.all().aggregate(weight=Sum(F('weight')))["weight"]
 
 # unit
 class Unit(models.Model):
@@ -151,7 +182,7 @@ class ExercisePeopleType(models.Model):
         return f"{self.exercise}  {self.unit}  {self.people_type}  {self.quantity}"
 
 
-class EquipmentAmmo(models.Model):
+class EquipmentAmmoItem(models.Model):
     """Intermediate table for Equipments and Ammos assigning a quantity."""
 
     GROUND_COMBAT_ELEMENT = 'G'
@@ -170,11 +201,11 @@ class EquipmentAmmo(models.Model):
     )
 
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
-    ammo = models.ForeignKey(Ammo, on_delete=models.CASCADE)
-    quantity = models.IntegerField()
+    ammo = models.ForeignKey(AmmoItem, on_delete=models.CASCADE)
+
 
     def __str__(self):
-        return f"{self.unit_type}  {self.equipment}  {self.ammo}  {self.quantity}"
+        return f"{self.unit_type}  {self.equipment}  {self.ammo}"
 
     class Meta:
             constraints = [models.UniqueConstraint(fields=['equipment', 'ammo', 'unit_type'], name='EQUIPMENT_AMMO_UNIQUE')]

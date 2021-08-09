@@ -7,32 +7,34 @@ from .models import *
 
 def home(request):
     exercise = Exercise.objects.all().first()
-    weight = Exercise.objects.get_equipment_weight(exercise=exercise.id)
-    quantities = Exercise.objects.get_equipment_quantity(exercise=exercise.id)
-    fuel = Exercise.objects.get_equipment_bingo_fuel(exercise=exercise.id)
-    equipment_ammos = Exercise.objects.get_equipment_ammo_count(exercise=exercise.id)
-    test = Equipment.objects.get(id=1)
+    #weight = Exercise.objects.get_equipment_weight(exercise=exercise.id)
+    #quantities = Exercise.objects.get_equipment_quantity(exercise=exercise.id)
+    #fuel = Exercise.objects.get_equipment_bingo_fuel(exercise=exercise.id)
+    #equipment_ammos = Exercise.objects.get_equipment_ammo_count(exercise=exercise.id)
+    ammo_weight = AmmoItem.objects.get_ammo_weight(exercise=exercise.id)
+  
+
 
     # get all equipments going and list their ammos
-    ammos_list = ExerciseEquipment.objects.filter(exercise=exercise.id).values('equipment__name').annotate(count=Sum('equipment__ammos'))
-    
-    #test_list = Exercise.objects.filter(id=exercise.id).prefetch_related('equipments','equipments__ammos')
-    test_list = Ammo.objects.filter(equipment__exercise=exercise.id)
+    #ammos_list = ExerciseEquipment.objects.filter(exercise=exercise.id).values('equipment__name').annotate(count=Sum(F('equipment__ammos__weight') * F('quantity')))
+    print(ammo_weight)
+    #ammos_total = ExerciseEquipment.objects.filter(exercise=exercise.id).aggregate(total_weight=Sum(F('equipment__weight') * F('quantity')))
 
     
 
-    print(test_list)
+
+
+
+    
+
     
 
 
     context = {
         
-        'weight' : weight,
-        'quantities' : quantities,
-        'fuel' : fuel,
-        'equipment_ammos' : equipment_ammos,
-        'ammos_list' : ammos_list,
-        'test_list' : test_list,
+        'ammo_weight' : ammo_weight,
+
+      
     }
 
     return render(request, 'exercise/home.html', context=context)
