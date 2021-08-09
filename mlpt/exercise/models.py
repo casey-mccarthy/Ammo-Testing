@@ -4,60 +4,15 @@ from django.db.models import Sum, F, Count
 from django.db.models.query import QuerySet
 
 
-# Create your models here.
-
-
-class ExerciseManager(models.Manager):
-
-    def get_equipment_weight(self, exercise: int) -> dict:
-        """Return the cumulative weight of each equipment associated with a exercise."""
-        return self.get_queryset().filter(id=exercise).aggregate(
-            total_weight=Sum(
-                F('equipments__weight')*F('exerciseequipment__quantity')
-                )
-            )
-
-
-    def get_equipment_quantity(self, exercise: int) -> dict:
-        """Returns the total number of equipments associated with a exercise."""
-        return self.get_queryset().filter(id=exercise).aggregate(
-            total_equipments=Sum('exerciseequipment__quantity')
-            )
-
-
-    def get_equipment_bingo_fuel(self, exercise: int) -> dict:
-        """Returns the total amount of initial fuel required to top off every equipment on a exercise."""
-        return self.get_queryset().filter(id=exercise).aggregate(
-            total_bingo_fuel=Sum(F('equipments__fuel_capacity') * F('exerciseequipment__quantity'))
-            )
-
-
-    def get_equipment_ammo_count(self, exercise: int):
-        """Return a total count of all ammo for each equipment associated to a exercise."""
-        return Equipment.objects.filter(
-                exercise__in=self.get_queryset().filter(id=exercise)
-                ).aggregate(ammo_count=Count('ammos'))
-
-
-    def get_equipment_ammo_weight(self, exercise: int):
-        """Return a total weight of all ammo for each equipment associated to a exercise."""
-        return AmmoItem.objects.filter(
-            equipment__in=Equipment.objects.filter(
-                exercise__in=self.get_queryset().filter(id=exercise)
-                )
-            ).aggregate(ammo_weight=Sum(F('ammo__weight') * F('quantity')))
-
-
 class EquipmentItemManager(models.Manager):
 
-    def get_ammo_weight(self) -> dict:
-        """Return the cumulative weight of each equipment associated with a exercise."""
-        return self.get_queryset().filter().aggregate(
-            total_weight=Sum(
-                F('ammo__weight')*F('exerciseequipment__quantity')
-                )
-            )
+    def get_total_weight(self, exercise: int) -> dict:
+        """Return the cumulative weight for all equipment associated with a single exercise."""
+        pass
 
+    def get_total_count(self, exercise: int) -> dict:
+        """Return the cumulative count of all equipment associated with a single exercise."""
+        pass
 
 class AmmoItemManager(models.Manager):
 
@@ -246,7 +201,7 @@ class Exercise(models.Model):
 
 class ExerciseEdl(models.Model):
     """Intermediate table for Exercises and Equipments assigning a quantity."""
-    
+
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
     equipment = models.ForeignKey(EquipmentItem, on_delete=models.CASCADE, related_name='gear')
