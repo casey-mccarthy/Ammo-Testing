@@ -190,7 +190,6 @@ class Exercise(models.Model):
     name = models.CharField(max_length=128)
     equipments = models.ManyToManyField(EquipmentItem, through="ExerciseEdl", through_fields=('exercise', 'equipment'),)
     units = models.ManyToManyField(Unit)
-    objects = ExerciseManager()
 
     class Meta:
         base_manager_name = 'objects'
