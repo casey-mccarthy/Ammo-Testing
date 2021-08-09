@@ -118,6 +118,7 @@ class CombatLoadManager(models.Manager):
 # ammo
 class Ammo(models.Model):
     """A part to a Equipment."""
+
     name = models.CharField(max_length=50, help_text="The common name of the part.")
     weight = models.IntegerField(default=0, help_text="The weight of the part.")
 
@@ -200,7 +201,6 @@ class EquipmentItem(models.Model):
     )
 
     quantity = models.PositiveIntegerField(default=0, help_text="The quantity of an item.")
-
     objects = EquipmentItemManager()
 
     def __str__(self):
@@ -211,12 +211,8 @@ class EquipmentItem(models.Model):
 class CombatLoad(models.Model):
     """A reference to teh combat load for a peice of equipment."""
 
-    
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
     ammoitem = models.ForeignKey(AmmoItem, on_delete=models.CASCADE)
-
-
-
     objects = CombatLoadManager()
 
     def __str__(self):
@@ -225,6 +221,7 @@ class CombatLoad(models.Model):
 # unit
 class Unit(models.Model):
     """A unit that is used to hold many persons and assets."""
+
     name = models.CharField(max_length=50, help_text="The name of the unit.")
 
     def __str__(self):
@@ -234,6 +231,7 @@ class Unit(models.Model):
 # exercise
 class Exercise(models.Model):
     """A exercise will be the primary object, composed of other objects that are associated with the exercise."""
+
     name = models.CharField(max_length=128)
     equipments = models.ManyToManyField(EquipmentItem, through="ExerciseEdl", through_fields=('exercise', 'equipment'),)
     units = models.ManyToManyField(Unit)
@@ -248,6 +246,7 @@ class Exercise(models.Model):
 
 class ExerciseEdl(models.Model):
     """Intermediate table for Exercises and Equipments assigning a quantity."""
+    
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
     equipment = models.ForeignKey(EquipmentItem, on_delete=models.CASCADE, related_name='gear')
